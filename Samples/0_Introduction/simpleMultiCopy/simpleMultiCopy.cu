@@ -86,7 +86,7 @@ cudaEvent_t start, stop;
 
 int N = 1 << 22;
 int nreps = 10;  // number of times each experiment is repeated
-int inner_reps = 5;
+int inner_reps = 1;
 
 int memsize;
 
@@ -156,8 +156,10 @@ int main(int argc, char *argv[]) {
 
   thread_blocks = N / block.x;
 
-  grid.x = thread_blocks % 65535;
-  grid.y = (thread_blocks / 65535 + 1);
+  // grid.x = thread_blocks % 65535;
+  // grid.y = (thread_blocks / 65535 + 1);
+  grid.x = thread_blocks;
+  grid.y = 1;
 
   // Allocate resources
 
@@ -211,9 +213,25 @@ int main(int argc, char *argv[]) {
   incKernel<<<grid, block, 0, 0>>>(d_data_out[0], d_data_in[0], N, inner_reps);
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
-
+  
   float kernel_time;
   cudaEventElapsedTime(&kernel_time, start, stop);
+  
+  cudaEventRecord(start, 0);
+  checkCudaErrors(cudaMemcpyAsync(d_data_in[0], d_data_out[0], memsize, cudaMemcpyDeviceToDevice, 0));
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+
+  float memcpy_d2d_time;
+  cudaEventElapsedTime(&memcpy_d2d_time, start, stop);
+
+  cudaEventRecord(start, 0);
+  checkCudaErrors(cudaMemset(d_data_out[0], 0, memsize));
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+
+  float memset_time;
+  cudaEventElapsedTime(&memset_time, start, stop);
 
   printf("\n");
   printf("Relevant properties of this CUDA device\n");
@@ -235,8 +253,12 @@ int main(int argc, char *argv[]) {
          (memsize * 1e-6) / memcpy_h2d_time);
   printf(" Memcpy device to host\t: %f ms (%f GB/s)\n", memcpy_d2h_time,
          (memsize * 1e-6) / memcpy_d2h_time);
+  printf(" Memcpy device to device\t: %f ms (%f GB/s)\n", memcpy_d2d_time,
+         (memsize * 2e-6) / memcpy_d2d_time);
   printf(" Kernel\t\t\t: %f ms (%f GB/s)\n", kernel_time,
          (inner_reps * memsize * 2e-6) / kernel_time);
+  printf(" Memset \t: %f ms (%f GB/s)\n", memset_time,
+         (memsize * 1e-6) / memset_time);
 
   printf("\n");
   printf(
