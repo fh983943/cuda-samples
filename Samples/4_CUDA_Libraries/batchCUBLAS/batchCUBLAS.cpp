@@ -585,6 +585,10 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  //cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
+  //cublasSetMathMode(handle, CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
+  cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH);
+
   // Run single kernels
   fprintf(stdout, "\n ==== Running single kernels ==== \n\n");
   nTimes = opts.N;

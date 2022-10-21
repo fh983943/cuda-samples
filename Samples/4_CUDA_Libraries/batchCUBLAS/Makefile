@@ -276,7 +276,7 @@ LIBRARIES :=
 ################################################################################
 
 # Gencode arguments
-SMS ?=
+SMS ?= 53 61 70 72 75 80 86 87
 
 ifeq ($(GENCODE_FLAGS),)
 # Generate SASS code for each SM architecture listed in $(SMS)
